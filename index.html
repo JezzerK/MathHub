@@ -6,6 +6,16 @@
     <title>Math Training Hub</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
 </head>
 <body>
     <div class="container">
@@ -105,6 +115,20 @@
             <div class="feedback" id="unit-circle-feedback"></div>
             <div class="controls">
                 <button id="new-unit-circle">New Question</button>
+                <div class="difficulty-selector">
+                    <label>Angle Format:</label>
+                    <select id="angle-format">
+                        <option value="degrees">Degrees</option>
+                        <option value="radians">Radians</option>
+                    </select>
+                </div>
+                <div class="difficulty-selector">
+                    <label>Answer Format:</label>
+                    <select id="answer-format">
+                        <option value="fractions">Fractions (√3/2)</option>
+                        <option value="decimals">Decimals (0.866)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>

@@ -129,48 +129,192 @@ function checkArithmeticAnswer() {
 
 // Unit Circle Module
 function generateUnitCircleQuestion() {
-    const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
-    const angle = angles[Math.floor(Math.random() * angles.length)];
+    const angleFormat = document.getElementById('angle-format').value;
+    const answerFormat = document.getElementById('answer-format').value;
+    
+    // Define angles in both degrees and radians
+    const degreeAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+    const radianAngles = [0, Math.PI/6, Math.PI/4, Math.PI/3, Math.PI/2, 2*Math.PI/3, 3*Math.PI/4, 5*Math.PI/6, Math.PI, 7*Math.PI/6, 5*Math.PI/4, 4*Math.PI/3, 3*Math.PI/2, 5*Math.PI/3, 7*Math.PI/4, 11*Math.PI/6];
+    
     const questionTypes = ['sin', 'cos', 'tan'];
     const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
     
-    let answer, question;
-    const radians = angle * Math.PI / 180;
+    let angle, angleDisplay, answer, question;
     
-    switch(questionType) {
-        case 'sin':
-            answer = Math.round(Math.sin(radians) * 100) / 100;
-            question = `What is sin(${angle}°)?`;
-            break;
-        case 'cos':
-            answer = Math.round(Math.cos(radians) * 100) / 100;
-            question = `What is cos(${angle}°)?`;
-            break;
-        case 'tan':
-            answer = Math.round(Math.tan(radians) * 100) / 100;
-            question = `What is tan(${angle}°)?`;
-            break;
+    if (angleFormat === 'degrees') {
+        angle = degreeAngles[Math.floor(Math.random() * degreeAngles.length)];
+        angleDisplay = `${angle}°`;
+    } else {
+        angle = radianAngles[Math.floor(Math.random() * radianAngles.length)];
+        angleDisplay = formatRadians(angle);
     }
     
-    state.currentQuestion = { question, answer, type: 'unit-circle', angle, questionType };
-    document.getElementById('unit-circle-question').textContent = question;
+    const radians = angleFormat === 'degrees' ? angle * Math.PI / 180 : angle;
+    
+    // Get exact fraction values
+    const trigValues = getExactTrigValues(radians, questionType);
+    
+    if (answerFormat === 'fractions') {
+        answer = trigValues.fraction;
+    } else {
+        answer = Math.round(trigValues.decimal * 1000) / 1000;
+    }
+    
+    question = `What is ${questionType}(${angleDisplay})?`;
+    
+    state.currentQuestion = { 
+        question, 
+        answer, 
+        type: 'unit-circle', 
+        angle: angleFormat === 'degrees' ? angle : angle * 180 / Math.PI, 
+        questionType,
+        angleFormat,
+        answerFormat,
+        exactValue: trigValues
+    };
+    
+    document.getElementById('unit-circle-question').innerHTML = question;
     
     // Generate answer options
-    generateAnswerOptions(answer);
+    generateAnswerOptions(answer, answerFormat, trigValues);
     
     // Draw unit circle
-    drawUnitCircle(angle);
+    drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
     
     document.getElementById('unit-circle-feedback').textContent = '';
     document.getElementById('unit-circle-feedback').className = 'feedback';
 }
 
-function generateAnswerOptions(correctAnswer) {
+// Helper function to get exact trigonometric values
+function getExactTrigValues(radians, trigFunction) {
+    const angle = radians * 180 / Math.PI;
+    let decimal, fraction;
+    
+    switch(trigFunction) {
+        case 'sin':
+            decimal = Math.sin(radians);
+            fraction = getExactSinValue(angle);
+            break;
+        case 'cos':
+            decimal = Math.cos(radians);
+            fraction = getExactCosValue(angle);
+            break;
+        case 'tan':
+            decimal = Math.tan(radians);
+            fraction = getExactTanValue(angle);
+            break;
+    }
+    
+    return { decimal, fraction };
+}
+
+// Exact sin values for common angles
+function getExactSinValue(angle) {
+    const sinValues = {
+        0: '0',
+        30: '1/2',
+        45: '√2/2',
+        60: '√3/2',
+        90: '1',
+        120: '√3/2',
+        135: '√2/2',
+        150: '1/2',
+        180: '0',
+        210: '-1/2',
+        225: '-√2/2',
+        240: '-√3/2',
+        270: '-1',
+        300: '-√3/2',
+        315: '-√2/2',
+        330: '-1/2'
+    };
+    return sinValues[angle] || Math.round(Math.sin(angle * Math.PI / 180) * 1000) / 1000;
+}
+
+// Exact cos values for common angles
+function getExactCosValue(angle) {
+    const cosValues = {
+        0: '1',
+        30: '√3/2',
+        45: '√2/2',
+        60: '1/2',
+        90: '0',
+        120: '-1/2',
+        135: '-√2/2',
+        150: '-√3/2',
+        180: '-1',
+        210: '-√3/2',
+        225: '-√2/2',
+        240: '-1/2',
+        270: '0',
+        300: '1/2',
+        315: '√2/2',
+        330: '√3/2'
+    };
+    return cosValues[angle] || Math.round(Math.cos(angle * Math.PI / 180) * 1000) / 1000;
+}
+
+// Exact tan values for common angles
+function getExactTanValue(angle) {
+    const tanValues = {
+        0: '0',
+        30: '√3/3',
+        45: '1',
+        60: '√3',
+        90: 'undefined',
+        120: '-√3',
+        135: '-1',
+        150: '-√3/3',
+        180: '0',
+        210: '√3/3',
+        225: '1',
+        240: '√3',
+        270: 'undefined',
+        300: '-√3',
+        315: '-1',
+        330: '-√3/3'
+    };
+    return tanValues[angle] || Math.round(Math.tan(angle * Math.PI / 180) * 1000) / 1000;
+}
+
+// Format radians for display
+function formatRadians(radians) {
+    const commonRadians = {
+        0: '0',
+        [Math.PI/6]: 'π/6',
+        [Math.PI/4]: 'π/4',
+        [Math.PI/3]: 'π/3',
+        [Math.PI/2]: 'π/2',
+        [2*Math.PI/3]: '2π/3',
+        [3*Math.PI/4]: '3π/4',
+        [5*Math.PI/6]: '5π/6',
+        [Math.PI]: 'π',
+        [7*Math.PI/6]: '7π/6',
+        [5*Math.PI/4]: '5π/4',
+        [4*Math.PI/3]: '4π/3',
+        [3*Math.PI/2]: '3π/2',
+        [5*Math.PI/3]: '5π/3',
+        [7*Math.PI/4]: '7π/4',
+        [11*Math.PI/6]: '11π/6'
+    };
+    return commonRadians[radians] || `${radians.toFixed(3)}`;
+}
+
+function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
     const options = [correctAnswer];
     
     // Generate 3 incorrect options
     while (options.length < 4) {
-        let option = Math.round((Math.random() * 2 - 1) * 100) / 100;
+        let option;
+        if (answerFormat === 'fractions') {
+            // Generate incorrect fraction options
+            const commonFractions = ['0', '1/2', '√2/2', '√3/2', '1', '-1/2', '-√2/2', '-√3/2', '-1', '√3/3', '-√3/3'];
+            option = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+        } else {
+            // Generate incorrect decimal options
+            option = Math.round((Math.random() * 2 - 1) * 1000) / 1000;
+        }
+        
         if (!options.includes(option)) {
             options.push(option);
         }
@@ -185,10 +329,22 @@ function generateAnswerOptions(correctAnswer) {
     options.forEach((option, index) => {
         const optionElement = document.createElement('div');
         optionElement.className = 'answer-option';
-        optionElement.textContent = option;
+        
+        // Use MathJax for beautiful rendering
+        if (answerFormat === 'fractions' && option.includes('√')) {
+            optionElement.innerHTML = `$$${option}$$`;
+        } else {
+            optionElement.textContent = option;
+        }
+        
         optionElement.onclick = () => selectAnswer(optionElement, option);
         optionsContainer.appendChild(optionElement);
     });
+    
+    // Re-render MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise([optionsContainer]);
+    }
 }
 
 function selectAnswer(element, value) {
@@ -262,11 +418,23 @@ function checkUnitCircleAnswer() {
     
     if (state.selectedAnswer === state.currentQuestion.answer) {
         state.correctAnswers++;
-        feedback.textContent = 'Correct!';
+        feedback.innerHTML = 'Correct!';
         feedback.className = 'feedback correct';
     } else {
-        feedback.textContent = `Incorrect. The answer is ${state.currentQuestion.answer}.`;
+        let correctAnswer = state.currentQuestion.answer;
+        
+        // Format the correct answer with MathJax if it's a fraction
+        if (state.currentQuestion.answerFormat === 'fractions' && correctAnswer.includes('√')) {
+            correctAnswer = `$$${correctAnswer}$$`;
+        }
+        
+        feedback.innerHTML = `Incorrect. The answer is ${correctAnswer}.`;
         feedback.className = 'feedback incorrect';
+        
+        // Re-render MathJax for the feedback
+        if (window.MathJax && correctAnswer.includes('$$')) {
+            MathJax.typesetPromise([feedback]);
+        }
     }
     
     updateProgress();
@@ -419,6 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Unit circle module
     document.getElementById('check-unit-circle').addEventListener('click', checkUnitCircleAnswer);
     document.getElementById('new-unit-circle').addEventListener('click', generateUnitCircleQuestion);
+    document.getElementById('angle-format').addEventListener('change', generateUnitCircleQuestion);
+    document.getElementById('answer-format').addEventListener('change', generateUnitCircleQuestion);
     
     // Factoring module
     document.getElementById('check-factoring').addEventListener('click', checkFactoringAnswer);

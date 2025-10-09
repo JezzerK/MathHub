@@ -329,6 +329,27 @@ button:active {
     border-color: #4a9eff;
 }
 
+/* MathJax styling */
+.answer-option mjx-container {
+    color: inherit;
+}
+
+.answer-option.selected mjx-container {
+    color: white;
+}
+
+.feedback mjx-container {
+    color: inherit;
+}
+
+.feedback.correct mjx-container {
+    color: #155724;
+}
+
+.feedback.incorrect mjx-container {
+    color: #721c24;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
