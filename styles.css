@@ -415,6 +415,58 @@ mjx-container {
     cursor: pointer;
 }
 
+/* Arithmetic controls */
+.difficulty-selector input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    border: 2px solid #404040;
+    border-radius: 4px;
+    background: #1a1a1a;
+    color: #ffffff;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.difficulty-selector span {
+    color: #b0b0b0;
+    margin: 0 8px;
+}
+
+.operator-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: flex-start;
+}
+
+.operator-checkboxes label {
+    color: #ffffff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    transition: all 0.3s ease;
+}
+
+.operator-checkboxes label:hover {
+    background: #404040;
+    border-color: #4a9eff;
+}
+
+.operator-checkboxes input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #4a9eff;
+    cursor: pointer;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

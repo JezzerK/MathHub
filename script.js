@@ -49,6 +49,14 @@ function initializeModule(moduleName) {
             break;
         case 'unit-circle':
             generateUnitCircleQuestion();
+            // Ensure unit circle shows immediately if enabled
+            setTimeout(() => {
+                const showCircle = document.getElementById('show-unit-circle').checked;
+                if (showCircle && state.currentQuestion) {
+                    const angle = state.currentQuestion.angle;
+                    drawUnitCircle(angle);
+                }
+            }, 50);
             break;
         case 'factoring':
             generateFactoringQuestion();
@@ -61,48 +69,80 @@ function initializeModule(moduleName) {
 
 // Arithmetic Module
 function generateArithmeticQuestion() {
-    const difficulty = document.getElementById('arithmetic-difficulty').value;
-    let maxValue;
+    let minValue = parseInt(document.getElementById('min-number').value);
+    let maxValue = parseInt(document.getElementById('max-number').value);
     
-    switch(difficulty) {
-        case 'easy': maxValue = 10; break;
-        case 'medium': maxValue = 50; break;
-        case 'hard': maxValue = 100; break;
+    // Validate and fix range
+    if (minValue > maxValue) {
+        [minValue, maxValue] = [maxValue, minValue];
+        document.getElementById('min-number').value = minValue;
+        document.getElementById('max-number').value = maxValue;
     }
     
-    const operations = ['+', '-', '×', '÷'];
-    const operation = operations[Math.floor(Math.random() * operations.length)];
+    // Ensure minimum values
+    if (minValue < 1) minValue = 1;
+    if (maxValue < 1) maxValue = 1;
+    
+    // Get selected operators
+    const selectedOperators = [];
+    document.querySelectorAll('input[name="operators"]:checked').forEach(checkbox => {
+        selectedOperators.push(checkbox.value);
+    });
+    
+    // If no operators selected, default to addition
+    if (selectedOperators.length === 0) {
+        selectedOperators.push('addition');
+    }
+    
+    const operation = selectedOperators[Math.floor(Math.random() * selectedOperators.length)];
     
     let num1, num2, answer, question;
     
     switch(operation) {
-        case '+':
-            num1 = Math.floor(Math.random() * maxValue) + 1;
-            num2 = Math.floor(Math.random() * maxValue) + 1;
+        case 'addition':
+            num1 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            num2 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
             answer = num1 + num2;
             question = `${num1} + ${num2} = ?`;
             break;
-        case '-':
-            num1 = Math.floor(Math.random() * maxValue) + 1;
-            num2 = Math.floor(Math.random() * num1) + 1;
+            
+        case 'subtraction':
+            num1 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            num2 = Math.floor(Math.random() * (num1 - minValue + 1)) + minValue;
             answer = num1 - num2;
             question = `${num1} - ${num2} = ?`;
             break;
-        case '×':
-            num1 = Math.floor(Math.random() * Math.min(maxValue, 12)) + 1;
-            num2 = Math.floor(Math.random() * Math.min(maxValue, 12)) + 1;
+            
+        case 'multiplication':
+            num1 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            num2 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
             answer = num1 * num2;
             question = `${num1} × ${num2} = ?`;
             break;
-        case '÷':
-            num2 = Math.floor(Math.random() * Math.min(maxValue, 12)) + 1;
-            answer = Math.floor(Math.random() * Math.min(maxValue, 12)) + 1;
+            
+        case 'division':
+            num2 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            answer = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
             num1 = num2 * answer;
             question = `${num1} ÷ ${num2} = ?`;
             break;
+            
+        case 'squaring':
+            num1 = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            answer = num1 * num1;
+            question = `${num1}² = ?`;
+            break;
+            
+        case 'square-root':
+            // Generate perfect squares for square root problems
+            const perfectSquare = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+            answer = perfectSquare;
+            num1 = perfectSquare * perfectSquare;
+            question = `√${num1} = ?`;
+            break;
     }
     
-    state.currentQuestion = { question, answer, type: 'arithmetic' };
+    state.currentQuestion = { question, answer, type: 'arithmetic', operation };
     document.getElementById('arithmetic-question').textContent = question;
     document.getElementById('arithmetic-answer').value = '';
     document.getElementById('arithmetic-feedback').textContent = '';
@@ -119,6 +159,11 @@ function checkArithmeticAnswer() {
         state.correctAnswers++;
         feedback.textContent = 'Correct!';
         feedback.className = 'feedback correct';
+        
+        // Auto-advance to next question after 0.5 seconds
+        setTimeout(() => {
+            generateArithmeticQuestion();
+        }, 500);
     } else {
         feedback.textContent = `Incorrect. The answer is ${state.currentQuestion.answer}.`;
         feedback.className = 'feedback incorrect';
@@ -181,7 +226,10 @@ function generateUnitCircleQuestion() {
     // Draw unit circle if enabled
     const showCircle = document.getElementById('show-unit-circle').checked;
     if (showCircle) {
-        drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
+        // Use setTimeout to ensure the canvas is ready
+        setTimeout(() => {
+            drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
+        }, 10);
     } else {
         clearUnitCircle();
     }
@@ -233,7 +281,7 @@ function getExactSinValue(angle) {
         315: '-√2/2',
         330: '-1/2'
     };
-    return sinValues[angle] || Math.round(Math.sin(angle * Math.PI / 180) * 1000) / 1000;
+    return sinValues[angle] || '0';
 }
 
 // Exact cos values for common angles
@@ -256,7 +304,7 @@ function getExactCosValue(angle) {
         315: '√2/2',
         330: '√3/2'
     };
-    return cosValues[angle] || Math.round(Math.cos(angle * Math.PI / 180) * 1000) / 1000;
+    return cosValues[angle] || '0';
 }
 
 // Exact tan values for common angles
@@ -279,7 +327,7 @@ function getExactTanValue(angle) {
         315: '-1',
         330: '-√3/3'
     };
-    return tanValues[angle] || Math.round(Math.tan(angle * Math.PI / 180) * 1000) / 1000;
+    return tanValues[angle] || '0';
 }
 
 // Format radians for display
@@ -306,57 +354,97 @@ function formatRadians(radians) {
 }
 
 function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
+    console.log('generateAnswerOptions called with:', { correctAnswer, answerFormat, trigValues });
+    
     const options = [correctAnswer];
     
+    // Always ensure we have exactly 4 options
+    const commonFractions = ['0', '1/2', '√2/2', '√3/2', '1', '-1/2', '-√2/2', '-√3/2', '-1', '√3/3', '-√3/3', '2', '-2', '1/√2', '-1/√2', '√2', '-√2', '√3', '-√3'];
+    const commonDecimals = [0, 0.5, 0.707, 0.866, 1, -0.5, -0.707, -0.866, -1, 0.577, -0.577, 2, -2, 0.707, -0.707, 1.414, -1.414, 1.732, -1.732];
+    
     // Generate 3 incorrect options
-    while (options.length < 4) {
+    let attempts = 0;
+    while (options.length < 4 && attempts < 50) {
         let option;
         if (answerFormat === 'fractions') {
-            // Generate incorrect fraction options
-            const commonFractions = ['0', '1/2', '√2/2', '√3/2', '1', '-1/2', '-√2/2', '-√3/2', '-1', '√3/3', '-√3/3'];
+            // Only use fraction options
             option = commonFractions[Math.floor(Math.random() * commonFractions.length)];
         } else {
-            // Generate incorrect decimal options
-            option = Math.round((Math.random() * 2 - 1) * 1000) / 1000;
+            // Only use decimal options
+            option = commonDecimals[Math.floor(Math.random() * commonDecimals.length)];
         }
         
         if (!options.includes(option)) {
             options.push(option);
         }
+        attempts++;
     }
+    
+    // Force exactly 4 options - add defaults if needed
+    while (options.length < 4) {
+        let newOption;
+        if (answerFormat === 'fractions') {
+            const defaults = ['0', '1', '-1', '1/2', '√2/2', '√3/2', '1/√2', '√3/3'];
+            newOption = defaults[options.length - 1] || '0';
+        } else {
+            const defaults = [0, 1, -1, 0.5, 0.707, 0.866, 0.707, 0.577];
+            newOption = defaults[options.length - 1] || 0;
+        }
+        
+        if (!options.includes(newOption)) {
+            options.push(newOption);
+        } else {
+            // If we're still stuck, just add a unique option with proper format
+            if (answerFormat === 'fractions') {
+                options.push(`${newOption}_${options.length}`);
+            } else {
+                options.push(parseFloat(newOption) + options.length * 0.001);
+            }
+        }
+    }
+    
+    // Ensure we have exactly 4 options
+    if (options.length !== 4) {
+        console.warn('Unit circle options count:', options.length, 'Expected: 4');
+        // Force 4 options with proper format
+        while (options.length < 4) {
+            if (answerFormat === 'fractions') {
+                options.push(`Option${options.length + 1}`);
+            } else {
+                options.push(0.001 * (options.length + 1));
+            }
+        }
+    }
+    
+    console.log('Final options array:', options);
     
     // Shuffle options
     options.sort(() => Math.random() - 0.5);
     
     const optionsContainer = document.getElementById('unit-circle-options');
+    console.log('Options container found:', !!optionsContainer);
+    
+    if (!optionsContainer) {
+        console.error('unit-circle-options element not found!');
+        return;
+    }
+    
     optionsContainer.innerHTML = '';
     
-    options.forEach((option, index) => {
+    // Always create exactly 4 options
+    for (let i = 0; i < 4; i++) {
+        const option = options[i] || `Option${i + 1}`;
         const optionElement = document.createElement('div');
         optionElement.className = 'answer-option';
         
-        // Use clean CSS fractions for beautiful rendering
-        if (answerFormat === 'fractions' && (option.includes('√') || option.includes('/'))) {
-            // Create clean fraction display
-            let fractionHTML = option;
-            if (option.includes('√')) {
-                // Convert √3/2 to clean fraction
-                fractionHTML = option.replace(/√(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">√$1</span><span class="denominator">$2</span></span>');
-                fractionHTML = fractionHTML.replace(/√(\d+)/g, '√$1');
-            } else if (option.includes('/')) {
-                // Convert 1/2 to clean fraction
-                fractionHTML = option.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">$1</span><span class="denominator">$2</span></span>');
-            }
-            optionElement.innerHTML = fractionHTML;
-        } else {
-            optionElement.textContent = option;
-        }
+        // Simple text display for now - avoid complex HTML formatting
+        optionElement.textContent = option;
         
         optionElement.onclick = () => selectAnswer(optionElement, option);
         optionsContainer.appendChild(optionElement);
-    });
+    }
     
-    // No need for MathJax re-rendering with CSS fractions
+    console.log('Created', optionsContainer.children.length, 'answer options');
 }
 
 function selectAnswer(element, value) {
@@ -452,6 +540,11 @@ function checkUnitCircleAnswer() {
         state.correctAnswers++;
         feedback.innerHTML = 'Correct!';
         feedback.className = 'feedback correct';
+        
+        // Auto-advance to next question after 0.5 seconds
+        setTimeout(() => {
+            generateUnitCircleQuestion();
+        }, 500);
     } else {
         let correctAnswer = state.currentQuestion.answer;
         
@@ -528,6 +621,11 @@ function checkFactoringAnswer() {
         state.correctAnswers++;
         feedback.textContent = 'Correct!';
         feedback.className = 'feedback correct';
+        
+        // Auto-advance to next question after 0.5 seconds
+        setTimeout(() => {
+            generateFactoringQuestion();
+        }, 500);
     } else {
         feedback.textContent = `Incorrect. The answer is ${state.currentQuestion.answer}.`;
         feedback.className = 'feedback incorrect';
@@ -592,6 +690,11 @@ function checkDerivativesAnswer() {
         state.correctAnswers++;
         feedback.textContent = 'Correct!';
         feedback.className = 'feedback correct';
+        
+        // Auto-advance to next question after 0.5 seconds
+        setTimeout(() => {
+            generateDerivativesQuestion();
+        }, 500);
     } else {
         feedback.textContent = `Incorrect. The answer is ${state.currentQuestion.answer}.`;
         feedback.className = 'feedback incorrect';
@@ -618,7 +721,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Arithmetic module
     document.getElementById('check-arithmetic').addEventListener('click', checkArithmeticAnswer);
     document.getElementById('new-arithmetic').addEventListener('click', generateArithmeticQuestion);
-    document.getElementById('arithmetic-difficulty').addEventListener('change', generateArithmeticQuestion);
+    document.getElementById('min-number').addEventListener('change', generateArithmeticQuestion);
+    document.getElementById('max-number').addEventListener('change', generateArithmeticQuestion);
+    
+    // Add event listeners for operator checkboxes
+    document.querySelectorAll('input[name="operators"]').forEach(checkbox => {
+        checkbox.addEventListener('change', generateArithmeticQuestion);
+    });
     
     // Unit circle module
     document.getElementById('check-unit-circle').addEventListener('click', checkUnitCircleAnswer);
@@ -628,7 +737,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('show-unit-circle').addEventListener('change', function() {
         if (this.checked) {
             const angle = state.currentQuestion ? state.currentQuestion.angle : 0;
-            drawUnitCircle(angle);
+            // Use setTimeout to ensure immediate display
+            setTimeout(() => {
+                drawUnitCircle(angle);
+            }, 10);
         } else {
             clearUnitCircle();
         }
