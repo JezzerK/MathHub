@@ -603,17 +603,32 @@ function generateFactoringQuestion() {
     let question, answer;
     
     switch(type) {
-        case 'quadratic':
-            const a = Math.floor(Math.random() * 3) + 1;
-            const b = Math.floor(Math.random() * 10) - 5;
-            const c = Math.floor(Math.random() * 10) - 5;
-            const d = Math.floor(Math.random() * 10) - 5;
-            
-            // Generate (ax + b)(cx + d)
-            const expanded = `${a * c}x² + ${a * d + b * c}x + ${b * d}`;
+        case 'quadratic-a1': {
+            // (x + b)(x + d), with b,d non-zero
+            const b = randomNonZeroInt(-9, 9);
+            const d = randomNonZeroInt(-9, 9);
+            const A = 1;
+            const B = b + d;
+            const C = b * d;
+            const expanded = formatQuadratic(A, B, C);
             question = `Factor: ${expanded}`;
-            answer = `(${a}x + ${b})(${c}x + ${d})`;
+            answer = `${formatLinearFactor(1, b)}${formatLinearFactor(1, d)}`;
             break;
+        }
+        case 'quadratic-a-gt-1': {
+            // (ax + b)(cx + d) with a,c >= 2 and b,d non-zero
+            const a = randomInt(2, 4);
+            const c = randomInt(2, 4);
+            const b = randomNonZeroInt(-9, 9);
+            const d = randomNonZeroInt(-9, 9);
+            const A = a * c;
+            const B = a * d + b * c;
+            const C = b * d;
+            const expanded = formatQuadratic(A, B, C);
+            question = `Factor: ${expanded}`;
+            answer = `${formatLinearFactor(a, b)}${formatLinearFactor(c, d)}`;
+            break;
+        }
             
         case 'difference-squares':
             const num = Math.floor(Math.random() * 10) + 1;
@@ -636,6 +651,46 @@ function generateFactoringQuestion() {
     document.getElementById('factoring-feedback').className = 'feedback';
 }
 
+// Helpers for factoring randomization
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomNonZeroInt(min, max) {
+    let n = 0;
+    while (n === 0) {
+        n = randomInt(min, max);
+    }
+    return n;
+}
+
+// Formatting helpers for clean polynomial display
+function formatSign(value) {
+    return value < 0 ? '-' : '+';
+}
+
+function formatQuadratic(A, B, C) {
+    const parts = [];
+    // Ax^2
+    parts.push(`${A === 1 ? 'x²' : A + 'x²'}`);
+    // Bx
+    if (B !== 0) {
+        parts.push(`${B > 0 ? ' + ' : ' - '}${Math.abs(B)}x`);
+    }
+    // C
+    if (C !== 0) {
+        parts.push(`${C > 0 ? ' + ' : ' - '}${Math.abs(C)}`);
+    }
+    return parts.join('');
+}
+
+function formatLinearFactor(aCoeff, constant) {
+    const xPart = aCoeff === 1 ? 'x' : `${aCoeff}x`;
+    const sign = constant < 0 ? ' - ' : ' + ';
+    const absC = Math.abs(constant);
+    return `(${xPart}${sign}${absC})`;
+}
+
 function checkFactoringAnswer() {
     const userAnswer = document.getElementById('factoring-answer').value.trim();
     const feedback = document.getElementById('factoring-feedback');
@@ -643,7 +698,23 @@ function checkFactoringAnswer() {
     state.totalQuestions++;
     
     // Normalize answers for comparison
-    const normalizeAnswer = (ans) => ans.replace(/\s/g, '').toLowerCase();
+    const normalizeAnswer = (ans) => {
+        if (!ans) return '';
+        let s = ans.replace(/\s/g, '').toLowerCase();
+        // Clean up sign sequences
+        s = s.replace(/\+\-/g, '-').replace(/-\+/g, '-').replace(/--/g, '+');
+        // Normalize multiplication symbol variants
+        s = s.replace(/×/g, '*');
+        // Sort factors so order does not matter
+        const factors = s.match(/\([^()]+\)/g);
+        if (factors && factors.length >= 1) {
+            const cleaned = factors.map(f => f)
+                                   .sort()
+                                   .join('');
+            return cleaned;
+        }
+        return s;
+    };
     
     if (normalizeAnswer(userAnswer) === normalizeAnswer(state.currentQuestion.answer)) {
         state.correctAnswers++;
