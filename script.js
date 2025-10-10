@@ -246,7 +246,8 @@ function generateUnitCircleQuestion() {
 
 // Helper function to get exact trigonometric values
 function getExactTrigValues(radians, trigFunction) {
-    const angle = radians * 180 / Math.PI;
+    // Round to the nearest integer degree to avoid floating point drift (e.g., 29.9999999)
+    const angle = Math.round((radians * 180) / Math.PI);
     let decimal, fraction;
     
     switch(trigFunction) {
@@ -360,7 +361,8 @@ function formatRadians(radians) {
 }
 
 function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
-    console.log('generateAnswerOptions called with:', { correctAnswer, answerFormat, trigValues });
+    // Ensure option format matches selection strictly
+    const isFractionFormat = answerFormat === 'fractions';
     
     const options = [correctAnswer];
     
@@ -372,7 +374,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
     let attempts = 0;
     while (options.length < 4 && attempts < 50) {
         let option;
-        if (answerFormat === 'fractions') {
+        if (isFractionFormat) {
             // Only use fraction options
             option = commonFractions[Math.floor(Math.random() * commonFractions.length)];
         } else {
@@ -389,7 +391,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
     // Force exactly 4 options - add defaults if needed
     while (options.length < 4) {
         let newOption;
-        if (answerFormat === 'fractions') {
+        if (isFractionFormat) {
             const defaults = ['0', '1', '-1', '1/2', '√2/2', '√3/2', '1/√2', '√3/3'];
             newOption = defaults[options.length - 1] || '0';
         } else {
@@ -401,7 +403,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
             options.push(newOption);
         } else {
             // If we're still stuck, just add a unique option with proper format
-            if (answerFormat === 'fractions') {
+            if (isFractionFormat) {
                 options.push(`${newOption}_${options.length}`);
             } else {
                 options.push(parseFloat(newOption) + options.length * 0.001);
@@ -414,7 +416,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
         console.warn('Unit circle options count:', options.length, 'Expected: 4');
         // Force 4 options with proper format
         while (options.length < 4) {
-            if (answerFormat === 'fractions') {
+            if (isFractionFormat) {
                 options.push(`Option${options.length + 1}`);
             } else {
                 options.push(0.001 * (options.length + 1));
@@ -443,8 +445,28 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
         const optionElement = document.createElement('div');
         optionElement.className = 'answer-option';
         
-        // Simple text display for now - avoid complex HTML formatting
-        optionElement.textContent = option;
+        // Render as text; ensure no decimals leak into fraction mode
+        if (isFractionFormat && typeof option === 'number') {
+            // Convert any accidental numeric into a reasonable fraction label
+            // Fallback map for common decimals
+            const decimalToFraction = {
+                '0': '0',
+                '0.5': '1/2',
+                '0.707': '√2/2',
+                '0.866': '√3/2',
+                '1': '1',
+                '-0.5': '-1/2',
+                '-0.707': '-√2/2',
+                '-0.866': '-√3/2',
+                '-1': '-1',
+                '0.577': '√3/3',
+                '-0.577': '-√3/3'
+            };
+            const key = option.toString();
+            optionElement.textContent = decimalToFraction[key] || '0';
+        } else {
+            optionElement.textContent = option;
+        }
         
         optionElement.onclick = () => selectAnswer(optionElement, option);
         optionsContainer.appendChild(optionElement);

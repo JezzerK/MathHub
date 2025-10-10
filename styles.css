@@ -268,7 +268,7 @@ button:active {
 
 .difficulty-selector {
     display: flex;
-    align-items: center;
+    align-items: baseline; /* align input text with label baseline for better visual balance */
     gap: 10px;
 }
 
@@ -425,7 +425,7 @@ mjx-container {
     color: #ffffff;
     font-size: 0.9rem;
     text-align: center;
-    transform: translateY(3px);
+    margin-bottom: 0; /* override global input margin to align with label text */
 }
 
 .difficulty-selector span {
