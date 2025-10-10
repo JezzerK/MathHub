@@ -178,8 +178,13 @@ function generateUnitCircleQuestion() {
     // Generate answer options
     generateAnswerOptions(answer, answerFormat, trigValues);
     
-    // Draw unit circle
-    drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
+    // Draw unit circle if enabled
+    const showCircle = document.getElementById('show-unit-circle').checked;
+    if (showCircle) {
+        drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
+    } else {
+        clearUnitCircle();
+    }
     
     document.getElementById('unit-circle-feedback').textContent = '';
     document.getElementById('unit-circle-feedback').className = 'feedback';
@@ -330,9 +335,19 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
         const optionElement = document.createElement('div');
         optionElement.className = 'answer-option';
         
-        // Use MathJax for beautiful rendering
-        if (answerFormat === 'fractions' && option.includes('√')) {
-            optionElement.innerHTML = `$$${option}$$`;
+        // Use clean CSS fractions for beautiful rendering
+        if (answerFormat === 'fractions' && (option.includes('√') || option.includes('/'))) {
+            // Create clean fraction display
+            let fractionHTML = option;
+            if (option.includes('√')) {
+                // Convert √3/2 to clean fraction
+                fractionHTML = option.replace(/√(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">√$1</span><span class="denominator">$2</span></span>');
+                fractionHTML = fractionHTML.replace(/√(\d+)/g, '√$1');
+            } else if (option.includes('/')) {
+                // Convert 1/2 to clean fraction
+                fractionHTML = option.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">$1</span><span class="denominator">$2</span></span>');
+            }
+            optionElement.innerHTML = fractionHTML;
         } else {
             optionElement.textContent = option;
         }
@@ -341,10 +356,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
         optionsContainer.appendChild(optionElement);
     });
     
-    // Re-render MathJax
-    if (window.MathJax) {
-        MathJax.typesetPromise([optionsContainer]);
-    }
+    // No need for MathJax re-rendering with CSS fractions
 }
 
 function selectAnswer(element, value) {
@@ -368,24 +380,30 @@ function drawUnitCircle(angle) {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw circle
+    // Draw main circle
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
     
-    // Draw axes
-    ctx.beginPath();
-    ctx.moveTo(centerX - radius, centerY);
-    ctx.lineTo(centerX + radius, centerY);
-    ctx.moveTo(centerX, centerY - radius);
-    ctx.lineTo(centerX, centerY + radius);
+    // Draw coordinate axes
     ctx.strokeStyle = '#666';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
+    
+    // Horizontal axis (x-axis)
+    ctx.beginPath();
+    ctx.moveTo(centerX - radius - 20, centerY);
+    ctx.lineTo(centerX + radius + 20, centerY);
     ctx.stroke();
     
-    // Draw angle line
+    // Vertical axis (y-axis)
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - radius - 20);
+    ctx.lineTo(centerX, centerY + radius + 20);
+    ctx.stroke();
+    
+    // Draw angle line from center
     const radians = angle * Math.PI / 180;
     const endX = centerX + radius * Math.cos(radians);
     const endY = centerY - radius * Math.sin(radians);
@@ -394,21 +412,35 @@ function drawUnitCircle(angle) {
     ctx.moveTo(centerX, centerY);
     ctx.lineTo(endX, endY);
     ctx.strokeStyle = '#4a9eff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Draw angle arc
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 30, 0, radians);
-    ctx.strokeStyle = '#4a9eff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4;
     ctx.stroke();
     
     // Draw angle label
     ctx.fillStyle = '#4a9eff';
-    ctx.font = '16px Inter';
+    ctx.font = 'bold 18px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`${angle}°`, centerX + 50, centerY - 20);
+    ctx.fillText(`${angle}°`, centerX + 60, centerY - 30);
+    
+    // Draw coordinate labels
+    ctx.fillStyle = '#b0b0b0';
+    ctx.font = '14px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('1', centerX + radius + 10, centerY - 5);
+    ctx.fillText('-1', centerX - radius - 10, centerY - 5);
+    ctx.fillText('1', centerX + 5, centerY - radius - 10);
+    ctx.fillText('-1', centerX + 5, centerY + radius + 15);
+    
+    // Draw center point
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+}
+
+function clearUnitCircle() {
+    const canvas = document.getElementById('unit-circle-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function checkUnitCircleAnswer() {
@@ -423,18 +455,22 @@ function checkUnitCircleAnswer() {
     } else {
         let correctAnswer = state.currentQuestion.answer;
         
-        // Format the correct answer with MathJax if it's a fraction
-        if (state.currentQuestion.answerFormat === 'fractions' && correctAnswer.includes('√')) {
-            correctAnswer = `$$${correctAnswer}$$`;
+        // Format the correct answer with clean CSS fractions
+        if (state.currentQuestion.answerFormat === 'fractions' && (correctAnswer.includes('√') || correctAnswer.includes('/'))) {
+            let fractionHTML = correctAnswer;
+            if (correctAnswer.includes('√')) {
+                // Convert √3/2 to clean fraction
+                fractionHTML = correctAnswer.replace(/√(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">√$1</span><span class="denominator">$2</span></span>');
+                fractionHTML = fractionHTML.replace(/√(\d+)/g, '√$1');
+            } else if (correctAnswer.includes('/')) {
+                // Convert 1/2 to clean fraction
+                fractionHTML = correctAnswer.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="numerator">$1</span><span class="denominator">$2</span></span>');
+            }
+            correctAnswer = fractionHTML;
         }
         
         feedback.innerHTML = `Incorrect. The answer is ${correctAnswer}.`;
         feedback.className = 'feedback incorrect';
-        
-        // Re-render MathJax for the feedback
-        if (window.MathJax && correctAnswer.includes('$$')) {
-            MathJax.typesetPromise([feedback]);
-        }
     }
     
     updateProgress();
@@ -589,6 +625,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('new-unit-circle').addEventListener('click', generateUnitCircleQuestion);
     document.getElementById('angle-format').addEventListener('change', generateUnitCircleQuestion);
     document.getElementById('answer-format').addEventListener('change', generateUnitCircleQuestion);
+    document.getElementById('show-unit-circle').addEventListener('change', function() {
+        if (this.checked) {
+            const angle = state.currentQuestion ? state.currentQuestion.angle : 0;
+            drawUnitCircle(angle);
+        } else {
+            clearUnitCircle();
+        }
+    });
     
     // Factoring module
     document.getElementById('check-factoring').addEventListener('click', checkFactoringAnswer);

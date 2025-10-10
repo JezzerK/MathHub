@@ -358,17 +358,61 @@ button:active {
     color: #721c24;
 }
 
-/* Better math rendering */
-mjx-container {
+/* Beautiful CSS fractions */
+.fraction {
     display: inline-block;
-    margin: 0;
-    padding: 0;
     vertical-align: middle;
+    text-align: center;
+    font-size: 1.1em;
+    line-height: 1;
 }
 
-mjx-math {
-    font-size: inherit;
-    line-height: inherit;
+.fraction .numerator {
+    display: block;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 1px;
+    margin-bottom: 1px;
+}
+
+.fraction .denominator {
+    display: block;
+    padding-top: 1px;
+}
+
+/* Simple, clean square root symbol */
+.sqrt {
+    font-family: 'Times New Roman', serif;
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Remove MathJax styling since we're not using it */
+mjx-container {
+    display: none;
+}
+
+/* Canvas controls */
+.canvas-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.canvas-controls label {
+    color: #ffffff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.canvas-controls input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4a9eff;
+    cursor: pointer;
 }
 
 /* Responsive Design */
