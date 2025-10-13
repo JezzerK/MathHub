@@ -53,8 +53,8 @@ function initializeModule(moduleName) {
             setTimeout(() => {
                 const showCircle = document.getElementById('show-unit-circle').checked;
                 if (showCircle && state.currentQuestion) {
-                    const angle = state.currentQuestion.angle;
-                    drawUnitCircle(angle);
+                    const angle = state.currentQuestion.angle; // degrees
+                    drawUnitCircle(angle, state.currentQuestion.angleFormat);
                 }
             }, 50);
             break;
@@ -234,7 +234,8 @@ function generateUnitCircleQuestion() {
     if (showCircle) {
         // Use setTimeout to ensure the canvas is ready
         setTimeout(() => {
-            drawUnitCircle(angleFormat === 'degrees' ? angle : angle * 180 / Math.PI);
+            const angleDegrees = angleFormat === 'degrees' ? angle : angle * 180 / Math.PI;
+            drawUnitCircle(angleDegrees, angleFormat);
         }, 10);
     } else {
         clearUnitCircle();
@@ -339,25 +340,27 @@ function getExactTanValue(angle) {
 
 // Format radians for display
 function formatRadians(radians) {
-    const commonRadians = {
+    // Convert to nearest degree from our supported set to avoid float key issues
+    const degrees = Math.round((radians * 180) / Math.PI);
+    const degreeToPi = {
         0: '0',
-        [Math.PI/6]: 'π/6',
-        [Math.PI/4]: 'π/4',
-        [Math.PI/3]: 'π/3',
-        [Math.PI/2]: 'π/2',
-        [2*Math.PI/3]: '2π/3',
-        [3*Math.PI/4]: '3π/4',
-        [5*Math.PI/6]: '5π/6',
-        [Math.PI]: 'π',
-        [7*Math.PI/6]: '7π/6',
-        [5*Math.PI/4]: '5π/4',
-        [4*Math.PI/3]: '4π/3',
-        [3*Math.PI/2]: '3π/2',
-        [5*Math.PI/3]: '5π/3',
-        [7*Math.PI/4]: '7π/4',
-        [11*Math.PI/6]: '11π/6'
+        30: 'π/6',
+        45: 'π/4',
+        60: 'π/3',
+        90: 'π/2',
+        120: '2π/3',
+        135: '3π/4',
+        150: '5π/6',
+        180: 'π',
+        210: '7π/6',
+        225: '5π/4',
+        240: '4π/3',
+        270: '3π/2',
+        300: '5π/3',
+        315: '7π/4',
+        330: '11π/6'
     };
-    return commonRadians[radians] || `${radians.toFixed(3)}`;
+    return degreeToPi[degrees] || `${radians.toFixed(3)}`;
 }
 
 function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
@@ -441,7 +444,7 @@ function generateAnswerOptions(correctAnswer, answerFormat, trigValues) {
     
     // Always create exactly 4 options
     for (let i = 0; i < 4; i++) {
-        const option = options[i] || `Option${i + 1}`;
+        const option = (typeof options[i] !== 'undefined') ? options[i] : `Option${i + 1}`;
         const optionElement = document.createElement('div');
         optionElement.className = 'answer-option';
         
@@ -486,7 +489,7 @@ function selectAnswer(element, value) {
     state.selectedAnswer = value;
 }
 
-function drawUnitCircle(angle) {
+function drawUnitCircle(angleDegrees, angleFormat = 'degrees') {
     const canvas = document.getElementById('unit-circle-canvas');
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
@@ -520,7 +523,7 @@ function drawUnitCircle(angle) {
     ctx.stroke();
     
     // Draw angle line from center
-    const radians = angle * Math.PI / 180;
+    const radians = angleDegrees * Math.PI / 180;
     const endX = centerX + radius * Math.cos(radians);
     const endY = centerY - radius * Math.sin(radians);
     
@@ -535,7 +538,8 @@ function drawUnitCircle(angle) {
     ctx.fillStyle = '#4a9eff';
     ctx.font = 'bold 18px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`${angle}°`, centerX + 60, centerY - 30);
+    const angleLabel = angleFormat === 'degrees' ? `${angleDegrees}°` : formatRadians(radians);
+    ctx.fillText(angleLabel, centerX + 60, centerY - 30);
     
     // Draw coordinate labels
     ctx.fillStyle = '#b0b0b0';
@@ -856,10 +860,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('answer-format').addEventListener('change', generateUnitCircleQuestion);
     document.getElementById('show-unit-circle').addEventListener('change', function() {
         if (this.checked) {
-            const angle = state.currentQuestion ? state.currentQuestion.angle : 0;
+            const angle = state.currentQuestion ? state.currentQuestion.angle : 0; // degrees
+            const angleFormat = state.currentQuestion ? state.currentQuestion.angleFormat : 'degrees';
             // Use setTimeout to ensure immediate display
             setTimeout(() => {
-                drawUnitCircle(angle);
+                drawUnitCircle(angle, angleFormat);
             }, 10);
         } else {
             clearUnitCircle();
